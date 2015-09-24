@@ -1,14 +1,17 @@
-{- A server made to recieve a message outbound from Slack (inbound to the bot.)-}
+{-# OPTIONS_GHC -Wall #-}
 {-# LANGUAGE DeriveGeneric     #-}
 {-# LANGUAGE OverloadedStrings #-}
+
+{- A server made to recieve a message outbound from Slack (inbound to the bot.)-}
+
 module OutgoingWebhook where
 
 import           Blaze.ByteString.Builder (copyByteString)
 import qualified Data.ByteString.Char8    as B
-import           Data.IORef               (IORef)
-import qualified Data.Map.Strict          as M
-import           Data.Maybe               (fromMaybe)
 import           GHC.Generics             (Generic)
+import qualified Data.Map as M
+import           Data.Maybe               (fromMaybe)
+import           Data.IORef
 import           Network.HTTP.Types       (status200)
 import           Network.Wai
 import           Network.Wai.Handler.Warp
@@ -30,18 +33,18 @@ data OutgoingMessage = OutgoingMessage {
 type UserRecord = (String, String)
 type Handler = OutgoingMessage -> UserRecord
 
-listen :: IORef (M.Map String String) -> IO()
+listen :: IORef (M.Map a b) -> IO ()
 listen state = withStdoutLogger $ \aplogger -> do
     let port = 3000
     putStrLn $ "Listening on port " ++ show port
     run port $ app state aplogger
 
-app :: IORef (M.Map String String) -> ApacheLogger -> Application -- Request -> (Response -> a) -> a
+app :: IORef (M.Map a b) -> ApacheLogger -> Application
 app state aplogger req response = do
     aplogger req status (Just len)
     params <- parseRawQS <$> requestBody req
-    om <- parseQS params
-    response $ index state afkHandler om
+    let om = parseQS params
+    response $ index state
   where
     status = status200
     len = 0 -- TODO: get length of response
@@ -49,9 +52,8 @@ app state aplogger req response = do
     parseRawQS :: B.ByteString -> [(B.ByteString, B.ByteString)]
     parseRawQS qs = (\[x,y] -> (x, y)) <$> B.split '=' <$> B.split '&' qs
 
-    parseQS :: [(B.ByteString, B.ByteString)] -> IO OutgoingMessage
-    parseQS params =
-        return OutgoingMessage {
+    parseQS :: [(B.ByteString, B.ByteString)] -> OutgoingMessage
+    parseQS params = OutgoingMessage {
             token = lookup' "token"
           , teamId = lookup' "team_id"
           , teamDomain = lookup' "team_domain"
@@ -65,13 +67,16 @@ app state aplogger req response = do
         }
       where
         lookup' :: B.ByteString -> String
-        lookup' k = B.unpack $ fromMaybe ("Key not found" :: B.ByteString) (lookup k params)
+        lookup' k = B.unpack $
+          fromMaybe ("Key not found" :: B.ByteString) (lookup k params)
 
-index :: IORef (M.Map String String) -> Handler -> OutgoingMessage -> Response
-index s h om = responseBuilder status200 [("Content-Type", "text/html")] (mconcat (map copyByteString [ "Thanks.\n" ]))
 
-  -- response <- responseBuilder status200 [("Content-Type", "text/html")] (mconcat (map copyByteString [ "Thanks.\n" ]))
-  -- return response
+index :: IORef (M.Map a b) -> Response
+index state =
+  responseBuilder
+    status200
+    [("Content-Type", "text/html")]
+    (mconcat (map copyByteString [ "Thanks.\n" ]))
 
-afkHandler :: Handler
+afkHandler :: IORef (M.Map a b) -> Handler
 afkHandler = undefined

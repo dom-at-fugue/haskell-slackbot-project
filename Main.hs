@@ -1,6 +1,6 @@
+
 module Main where
 
---import IncomingWebhook
 import qualified OutgoingWebhook as O
 import Data.Map
 import Data.IORef (IORef, newIORef, atomicModifyIORef)
@@ -10,5 +10,6 @@ import Control.Monad.Trans (liftIO, lift)
 
 main :: IO()
 main = do
-  afkMap <- newIORef empty
-  O.listen afkMap
+  foo <- newIORef Map.empty
+  O.listen foo
+
