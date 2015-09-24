@@ -9,4 +9,7 @@ import Debug.Trace
 import Control.Monad.Trans (liftIO, lift)
 
 main :: IO()
-main = O.listen
+main = do
+  foo <- newIORef Map.empty
+  O.listen foo
+
