@@ -6,7 +6,6 @@
 
 module OutgoingWebhook where
 
-import Debug.Trace
 import           Blaze.ByteString.Builder (copyByteString)
 import qualified Data.ByteString.Char8    as B
 import           GHC.Generics             (Generic)
@@ -33,22 +32,20 @@ data OutgoingMessage = OutgoingMessage {
 
 
 
-listen :: IORef (M.Map a b) -> IO ()
+listen :: IORef (M.Map String String) -> IO ()
 listen state = withStdoutLogger $ \aplogger -> do
     let port = 3000
     putStrLn $ "Listening on port " ++ show port
     run port $ app state aplogger
 
-app :: IORef (M.Map a b) -> ApacheLogger -> Application
+app :: IORef (M.Map String String) -> ApacheLogger -> Application
 app state aplogger req response = do
-    aplogger req status (Just len)
+    aplogger req status200 (Just 0)
     params <- parseRawQS <$> requestBody req
     let om = parseQS params
-    response $ index state
+    mytuple <- afkHandler state om
+    response $ index mytuple
   where
-    status = status200
-    len = 0 -- TODO: get length of response
-
     parseRawQS :: B.ByteString -> [(B.ByteString, B.ByteString)]
     parseRawQS qs = (\[x,y] -> (x, y)) <$> B.split '=' <$> B.split '&' qs
 
@@ -71,17 +68,17 @@ app state aplogger req response = do
           fromMaybe ("Key not found" :: B.ByteString) (lookup k params)
 
 
-index :: IORef (M.Map a b) -> Response
-index state =
+index :: String -> Response
+index x =
   responseBuilder
     status200
     [("Content-Type", "text/html")]
-    (mconcat (map copyByteString [ "Thanks.\n" ]))
+    (mconcat (map copyByteString [ "Thanks.\n", B.pack x]))
 
-type UserRecord = (String, String)
-type Handler = OutgoingMessage -> UserRecord
-
-afkHandler :: IORef (M.Map a b) -> OutgoingMessage -> (String, String)
+afkHandler :: IORef (M.Map String String) -> OutgoingMessage -> IO String
 afkHandler state om = do
+  print om
+  modifyIORef state $ \x -> M.insert (userName om) (text om) x
   mymap <- readIORef state
-  traceShow mymap ("foo" :: String, "bar" :: String)
+  print mymap
+  return "yes"

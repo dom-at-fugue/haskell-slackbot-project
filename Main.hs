@@ -2,14 +2,10 @@
 module Main where
 
 import qualified OutgoingWebhook as O
-import Data.Map
-import Data.IORef (IORef, newIORef, atomicModifyIORef)
-import Debug.Trace
-
-import Control.Monad.Trans (liftIO, lift)
+import qualified Data.Map as M
+import Data.IORef (newIORef)
 
 main :: IO()
 main = do
-  foo <- newIORef Map.empty
+  foo <- newIORef M.empty
   O.listen foo
-
