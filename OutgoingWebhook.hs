@@ -6,6 +6,7 @@
 
 module OutgoingWebhook where
 
+import Debug.Trace
 import           Blaze.ByteString.Builder (copyByteString)
 import qualified Data.ByteString.Char8    as B
 import           GHC.Generics             (Generic)
@@ -30,8 +31,7 @@ data OutgoingMessage = OutgoingMessage {
   , triggerWord :: String }
   deriving (Show, Generic)
 
-type UserRecord = (String, String)
-type Handler = OutgoingMessage -> UserRecord
+
 
 listen :: IORef (M.Map a b) -> IO ()
 listen state = withStdoutLogger $ \aplogger -> do
@@ -78,5 +78,10 @@ index state =
     [("Content-Type", "text/html")]
     (mconcat (map copyByteString [ "Thanks.\n" ]))
 
-afkHandler :: IORef (M.Map a b) -> Handler
-afkHandler = undefined
+type UserRecord = (String, String)
+type Handler = OutgoingMessage -> UserRecord
+
+afkHandler :: IORef (M.Map a b) -> OutgoingMessage -> (String, String)
+afkHandler state om = do
+  mymap <- readIORef state
+  traceShow mymap ("foo" :: String, "bar" :: String)

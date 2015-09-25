@@ -27,7 +27,8 @@ send :: String -> String -> IO()
 send c t = do
 
     let request = IncomingMessage c t
-    r <- post slackURL (encode request)
+    url <- slackURL
+    r <- post url (encode request)
 
     let datas = r ^. responseBody . key "data" . _String
         ua    = r ^. responseBody . key "headers" . key "User-Agent" . _String
