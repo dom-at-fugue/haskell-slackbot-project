@@ -40,11 +40,11 @@ listen state = withStdoutLogger $ \aplogger -> do
 
 app :: IORef (M.Map String String) -> ApacheLogger -> Application
 app state aplogger req response = do
-    aplogger req status200 (Just 0)
     params <- parseRawQS <$> requestBody req
     let om = parseQS params
-    mytuple <- afkHandler state om
-    response $ index mytuple
+    afkHandler state om
+    aplogger req status200 (Just 0)
+    response index
   where
     parseRawQS :: B.ByteString -> [(B.ByteString, B.ByteString)]
     parseRawQS qs = (\[x,y] -> (x, y)) <$> B.split '=' <$> B.split '&' qs
@@ -68,17 +68,15 @@ app state aplogger req response = do
           fromMaybe ("Key not found" :: B.ByteString) (lookup k params)
 
 
-index :: String -> Response
-index x =
+index :: Response
+index =
   responseBuilder
     status200
     [("Content-Type", "text/html")]
-    (mconcat (map copyByteString [ "Thanks.\n", B.pack x]))
+    (mconcat (map copyByteString [ "Thanks.\n"]))
 
-afkHandler :: IORef (M.Map String String) -> OutgoingMessage -> IO String
+afkHandler :: IORef (M.Map String String) -> OutgoingMessage -> IO ()
 afkHandler state om = do
-  print om
   modifyIORef state $ \x -> M.insert (userName om) (text om) x
   mymap <- readIORef state
   print mymap
-  return "yes"
