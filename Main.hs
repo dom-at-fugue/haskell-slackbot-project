@@ -1,9 +1,9 @@
 
 module Main where
 
+import           Data.IORef      (newIORef)
+import qualified Data.Map        as M
 import qualified OutgoingWebhook as O
-import qualified Data.Map as M
-import Data.IORef (newIORef)
 
 main :: IO()
 main = do

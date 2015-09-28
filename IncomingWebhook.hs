@@ -6,10 +6,10 @@ module IncomingWebhook where
 import           Control.Lens
 import           Data.Aeson
 import           Data.Aeson.Lens
-import qualified Data.Text       as T
-import           GHC.Generics    (Generic)
+import qualified Data.Text          as T
+import           GHC.Generics       (Generic)
 import           Network.Wreq
-import System.Environment
+import           System.Environment
 
 
 slackURL :: IO String
