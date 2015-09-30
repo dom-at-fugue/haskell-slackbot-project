@@ -95,7 +95,7 @@ afkHandler state om = case () of
      | strip (triggerWord om) == "status" -> do
         mymap <- readIORef state
         putStrLn "Was Status."
-        print mymap
+        print 
         I.send "#bottester" $ show mymap
      | otherwise -> print $ "Was otherwise." ++ triggerWord om
   where
